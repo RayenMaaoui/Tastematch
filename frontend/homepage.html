@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TasteMatch • AI-Powered Restaurant Suggestions</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap');
+        
+        :root {
+            --primary: #f97316;
+        }
+        
+        * {
+            transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            transition-duration: 150ms;
+        }
+        
+        .logo-font {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+
+        .chat-bubble {
+            animation: bubblePop 0.3s ease;
+        }
+        
+        @keyframes bubblePop {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .message {
+            max-width: 75%;
+        }
+    </style>
+</head>
+<body class="bg-white font-sans">
+    <!-- NAVBAR -->
+    <nav class="border-b bg-white sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo -->
+                <div class="flex items-center gap-x-2">
+                    <div class="w-9 h-9 bg-orange-500 rounded-2xl flex items-center justify-center text-white text-3xl font-bold shadow-inner">T</div>
+                    <div class="logo-font text-3xl tracking-tighter">
+                        <span class="text-orange-500">Taste</span><span class="text-emerald-600">Match</span>
+                    </div>
+                </div>
+
+                <!-- Search -->
+                <div class="flex-1 max-w-xl mx-8">
+                    <div onclick="focusSearch()" class="flex items-center bg-gray-100 hover:bg-gray-200 rounded-3xl px-6 py-3 cursor-pointer border border-transparent hover:border-gray-300">
+                        <i class="fa-solid fa-magnifying-glass text-gray-400 mr-3"></i>
+                        <input id="search-input" 
+                               type="text" 
+                               placeholder="Search restaurants, cuisine, or location..." 
+                               class="flex-1 bg-transparent outline-none text-base placeholder:text-gray-400">
+                        <button onclick="triggerAIFromSearch(event)" 
+                                class="ml-3 bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium px-5 py-1.5 rounded-3xl flex items-center gap-x-1">
+                            <i class="fa-solid fa-robot"></i>
+                            <span>AI Suggest</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Right side -->
+                <div class="flex items-center gap-x-6">
+                    <button onclick="openAIChat()" 
+                            class="flex items-center gap-x-2 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-3xl font-medium text-sm">
+                        <i class="fa-solid fa-robot text-lg"></i>
+                        <span>Talk to TasteAI</span>
+                    </button>
+                    
+                    <a href="login.html" class="flex items-center gap-x-2 text-gray-700 hover:text-orange-500 font-medium">
+                        <i class="fa-solid fa-user"></i>
+                        <span>Sign In</span>
+                    </a>
+                    
+                    <div class="text-2xl cursor-pointer">🇹🇳</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- FILTER BAR -->
+        <div class="max-w-7xl mx-auto px-6 py-4 border-t flex flex-wrap items-center gap-x-8 gap-y-4 text-sm">
+            <div class="flex items-center gap-x-2">
+                <i class="fa-solid fa-sliders text-orange-500"></i>
+                <span class="font-semibold">Filters</span>
+            </div>
+            
+            <!-- Categories -->
+            <div class="flex flex-wrap gap-2">
+                <button onclick="toggleCategory(this)" data-category="all" 
+                        class="category-btn active px-5 py-2 bg-orange-500 text-white rounded-3xl text-sm font-medium flex items-center gap-x-1">
+                    <i class="fa-solid fa-utensils"></i>
+                    All
+                </button>
+                <button onclick="toggleCategory(this)" data-category="italian" 
+                        class="category-btn px-5 py-2 bg-white text-gray-700 hover:bg-gray-100 border border-gray-300 rounded-3xl text-sm font-medium">Italian</button>
+                <button onclick="toggleCategory(this)" data-category="japanese" 
+                        class="category-btn px-5 py-2 bg-white text-gray-700 hover:bg-gray-100 border border-gray-300 rounded-3xl text-sm font-medium">Japanese</button>
+                <button onclick="toggleCategory(this)" data-category="fastfood" 
+                        class="category-btn px-5 py-2 bg-white text-gray-700 hover:bg-gray-100 border border-gray-300 rounded-3xl text-sm font-medium">Fast Food</button>
+                <button onclick="toggleCategory(this)" data-category="indian" 
+                        class="category-btn px-5 py-2 bg-white text-gray-700 hover:bg-gray-100 border border-gray-300 rounded-3xl text-sm font-medium">Indian</button>
+                <button onclick="toggleCategory(this)" data-category="chinese" 
+                        class="category-btn px-5 py-2 bg-white text-gray-700 hover:bg-gray-100 border border-gray-300 rounded-3xl text-sm font-medium">Chinese</button>
+                <button onclick="toggleCategory(this)" data-category="mexican" 
+                        class="category-btn px-5 py-2 bg-white text-gray-700 hover:bg-gray-100 border border-gray-300 rounded-3xl text-sm font-medium">Mexican</button>
+                <button onclick="toggleCategory(this)" data-category="bakery" 
+                        class="category-btn px-5 py-2 bg-white text-gray-700 hover:bg-gray-100 border border-gray-300 rounded-3xl text-sm font-medium">Bakery</button>
+                <button onclick="toggleCategory(this)" data-category="steakhouse" 
+                        class="category-btn px-5 py-2 bg-white text-gray-700 hover:bg-gray-100 border border-gray-300 rounded-3xl text-sm font-medium">Steakhouse</button>
+            </div>
+            
+            <!-- Price Range -->
+            <div class="flex items-center gap-x-4">
+                <span class="font-medium text-gray-500 text-sm">Price Range</span>
+                <div class="flex gap-x-1">
+                    <button onclick="togglePrice(this)" data-price="all" 
+                            class="price-btn active px-4 py-2 bg-emerald-500 text-white rounded-3xl text-sm font-semibold">All</button>
+                    <button onclick="togglePrice(this)" data-price="1" 
+                            class="price-btn px-4 py-2 bg-white text-gray-700 hover:bg-gray-100 border border-gray-300 rounded-3xl text-sm font-semibold">$</button>
+                    <button onclick="togglePrice(this)" data-price="2" 
+                            class="price-btn px-4 py-2 bg-white text-gray-700 hover:bg-gray-100 border border-gray-300 rounded-3xl text-sm font-semibold">$$</button>
+                    <button onclick="togglePrice(this)" data-price="3" 
+                            class="price-btn px-4 py-2 bg-white text-gray-700 hover:bg-gray-100 border border-gray-300 rounded-3xl text-sm font-semibold">$$$</button>
+                </div>
+            </div>
+            
+            <!-- Rating -->
+            <div class="flex items-center gap-x-4">
+                <span class="font-medium text-gray-500 text-sm">Minimum Rating</span>
+                <div class="flex items-center gap-x-3">
+                    <input type="range" id="rating-slider" 
+                           min="0" max="5" value="0" step="0.1"
+                           oninput="updateRatingValue(this)" 
+                           class="accent-orange-500 w-36">
+                    <span id="rating-value" class="font-semibold text-orange-500 w-8">Any</span>
+                </div>
+            </div>
+            
+            <button onclick="resetFilters()" 
+                    class="ml-auto text-sm text-gray-400 hover:text-orange-500 flex items-center gap-x-1">
+                <i class="fa-solid fa-rotate-right"></i>
+                <span>Reset all</span>
+            </button>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-6 py-8">
+        <!-- HERO BANNER -->
+        <div class="bg-gradient-to-r from-orange-500 to-emerald-600 rounded-3xl p-8 md:p-12 text-white flex flex-col md:flex-row items-center gap-8 mb-12">
+            <div class="flex-1">
+                <div class="inline-flex items-center bg-white/20 text-white text-sm font-medium px-4 py-2 rounded-3xl mb-4">
+                    ✨ Powered by TasteAI
+                </div>
+                <h1 class="text-5xl md:text-6xl font-semibold logo-font tracking-tighter leading-none mb-4">
+                    Find your next<br>perfect meal with AI
+                </h1>
+                <p class="text-lg text-white/90 max-w-md">Tell our AI bot what you're craving and get hyper-personalized restaurant suggestions in seconds.</p>
+                <button onclick="openAIChat()" 
+                        class="mt-6 bg-white text-orange-500 hover:bg-orange-100 font-semibold px-8 py-4 rounded-3xl flex items-center gap-x-3 text-lg">
+                    <i class="fa-solid fa-robot"></i>
+                    Chat with TasteAI now
+                </button>
+            </div>
+            <div class="hidden md:flex flex-1 justify-end">
+                <div class="bg-white/10 backdrop-blur-lg rounded-3xl p-6 shadow-2xl max-w-xs">
+                    <div class="text-white/90 text-sm mb-3">Last AI suggestion for you in Tunis:</div>
+                    <div class="flex items-center gap-x-4">
+                        <img src="https://picsum.photos/id/1015/80/80" alt="Bella Italia" class="w-20 h-20 object-cover rounded-2xl">
+                        <div>
+                            <div class="font-semibold">Bella Italia • 4.8 ★</div>
+                            <div class="text-sm text-white/70">Italian • 2.1 km away • $$</div>
+                            <div class="text-xs mt-2 bg-white/20 text-white px-3 py-1 rounded-3xl inline-flex items-center">
+                                Matches your love for pasta 🍝
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RECOMMENDED FOR YOU -->
+        <div class="mb-12">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h2 class="text-3xl font-semibold">Recommended for you</h2>
+                    <p class="text-gray-500">Personalized picks based on your preferences in Tunis</p>
+                </div>
+                <div class="flex items-center gap-x-2">
+                    <button onclick="prevSlide()" class="w-10 h-10 flex items-center justify-center border rounded-2xl hover:bg-gray-100"><i class="fa-solid fa-chevron-left"></i></button>
+                    <button onclick="nextSlide()" class="w-10 h-10 flex items-center justify-center border rounded-2xl hover:bg-gray-100"><i class="fa-solid fa-chevron-right"></i></button>
+                </div>
+            </div>
+            
+            <div id="recommended-grid" class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+
+        <!-- ALL RESTAURANTS -->
+        <div>
+            <h2 class="text-3xl font-semibold mb-2">All Restaurants</h2>
+            <p class="text-gray-500 mb-6">Discover amazing places to eat in Tunis</p>
+            
+            <div id="all-restaurants-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- AI CHATBOT MODAL -->
+    <div id="ai-chat-modal" onclick="if(event.target === this) closeAIChat()" 
+         class="hidden fixed inset-0 bg-black/70 z-[9999] flex items-end md:items-center justify-center">
+        
+        <div onclick="event.stopImmediatePropagation()" 
+             class="bg-white w-full md:w-[420px] md:rounded-3xl md:h-[620px] h-[85vh] flex flex-col shadow-2xl chat-bubble">
+            
+            <!-- Chat Header -->
+            <div class="flex items-center justify-between px-6 py-5 border-b">
+                <div class="flex items-center gap-x-3">
+                    <div class="w-9 h-9 bg-gradient-to-br from-orange-500 to-emerald-600 rounded-2xl flex items-center justify-center text-white text-2xl">🤖</div>
+                    <div>
+                        <div class="font-semibold">TasteAI</div>
+                        <div class="text-xs text-emerald-600 flex items-center gap-x-1">
+                            <div class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                            Always online • Powered by AI
+                        </div>
+                    </div>
+                </div>
+                <button onclick="closeAIChat()" class="text-gray-400 hover:text-gray-600 text-2xl">✕</button>
+            </div>
+            
+            <!-- Messages -->
+            <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-6 bg-gray-50">
+                <!-- Welcome message added by JS -->
+            </div>
+            
+            <!-- Input -->
+            <div class="p-4 border-t bg-white">
+                <form onsubmit="sendMessage(event)" class="flex gap-x-2">
+                    <input id="chat-input" 
+                           type="text" 
+                           placeholder="Ask anything... e.g. 'Italian near me' or 'spicy food under 20 TND'"
+                           class="flex-1 bg-gray-100 rounded-3xl px-6 py-4 outline-none text-sm">
+                    <button type="submit" 
+                            class="w-12 h-12 bg-orange-500 hover:bg-orange-600 text-white rounded-3xl flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </form>
+                <div class="text-[10px] text-center text-gray-400 mt-3">TasteAI can suggest restaurants, filter by mood, budget, or dietary needs</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="bg-gray-900 text-white py-12 mt-20">
+        <div class="max-w-7xl mx-auto px-6 text-center">
+            <div class="flex justify-center items-center gap-x-2 mb-6">
+                <div class="w-9 h-9 bg-orange-500 rounded-2xl flex items-center justify-center text-white text-3xl">T</div>
+                <div class="logo-font text-3xl">TasteMatch</div>
+            </div>
+            <p class="text-gray-400">Made with ❤️ in Tunis • AI that understands your taste</p>
+            <p class="text-xs text-gray-500 mt-8">© 2026 TasteMatch. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Tailwind script already loaded via CDN
+        function initializeTailwind() {
+            return {
+                config(userConfig = {}) {
+                    return {
+                        content: [],
+                        theme: {
+                            extend: {}
+                        },
+                        plugins: [],
+                        ...userConfig,
+                    }
+                },
+                theme: {
+                    extend: {},
+                },
+            }
+        }
+        
+        // Mock restaurant database (unchanged)
+        const restaurants = [
+            {
+                id: 1,
+                name: "Bella Italia",
+                category: "italian",
+                rating: 4.8,
+                price: 2,
+                image: "https://picsum.photos/id/1015/600/400",
+                distance: "2.1 km",
+                tags: ["Pasta", "Pizza", "Romantic"]
+            },
+            {
+                id: 2,
+                name: "Tokyo Sushi Bar",
+                category: "japanese",
+                rating: 4.9,
+                price: 3,
+                image: "https://picsum.photos/id/1005/600/400",
+                distance: "3.4 km",
+                tags: ["Sushi", "Fresh", "Japanese"]
+            },
+            {
+                id: 3,
+                name: "The Burger Joint",
+                category: "fastfood",
+                rating: 4.5,
+                price: 1,
+                image: "https://picsum.photos/id/201/600/400",
+                distance: "1.2 km",
+                tags: ["Burgers", "Fast", "American"]
+            },
+            {
+                id: 4,
+                name: "Spice Garden",
+                category: "indian",
+                rating: 4.7,
+                price: 2,
+                image: "https://picsum.photos/id/1009/600/400",
+                distance: "4.8 km",
+                tags: ["Curry", "Vegetarian", "Spicy"]
+            },
+            {
+                id: 5,
+                name: "Dragon Palace",
+                category: "chinese",
+                rating: 4.6,
+                price: 2,
+                image: "https://picsum.photos/id/133/600/400",
+                distance: "2.9 km",
+                tags: ["Dim Sum", "Noodles"]
+            },
+            {
+                id: 6,
+                name: "El Taquito",
+                category: "mexican",
+                rating: 4.4,
+                price: 1,
+                image: "https://picsum.photos/id/292/600/400",
+                distance: "1.8 km",
+                tags: ["Tacos", "Burritos"]
+            },
+            {
+                id: 7,
+                name: "La Boulangerie",
+                category: "bakery",
+                rating: 4.9,
+                price: 1,
+                image: "https://picsum.photos/id/312/600/400",
+                distance: "0.9 km",
+                tags: ["Croissants", "Coffee"]
+            },
+            {
+                id: 8,
+                name: "Prime Steakhouse",
+                category: "steakhouse",
+                rating: 4.8,
+                price: 3,
+                image: "https://picsum.photos/id/870/600/400",
+                distance: "5.2 km",
+                tags: ["Steak", "Wine"]
+            }
+        ]
+        
+        // NEW: Enhanced keyword scoring for smarter recommendations
+        const restaurantKeywords = {
+            1: ["italian", "pasta", "pizza", "carbonara", "bella", "italia", "romantic", "date"],
+            2: ["japanese", "sushi", "tokyo", "rolls", "tuna", "fresh"],
+            3: ["burger", "fastfood", "fast", "american", "cheese", "quick"],
+            4: ["indian", "spice", "curry", "butter chicken", "vegetarian", "spicy", "vegan"],
+            5: ["chinese", "dragon", "dim sum", "noodles"],
+            6: ["mexican", "taquito", "taco", "burrito"],
+            7: ["bakery", "boulangerie", "croissant", "coffee", "breakfast", "quick"],
+            8: ["steakhouse", "steak", "prime", "wine", "romantic", "date"]
+        };
+
+        function calculateMatchScore(message, restaurantId) {
+            const lowerMsg = message.toLowerCase();
+            const keywords = restaurantKeywords[restaurantId] || [];
+            let score = 0;
+            
+            keywords.forEach(kw => {
+                if (lowerMsg.includes(kw)) score += 1;
+            });
+            
+            // Bonus points for general intent words
+            if (lowerMsg.includes('near') || lowerMsg.includes('close') || lowerMsg.includes('tunis')) score += 0.5;
+            if (lowerMsg.includes('best') || lowerMsg.includes('recommend') || lowerMsg.includes('perfect')) score += 1;
+            if (lowerMsg.includes('cheap') || lowerMsg.includes('budget')) score += 0.5;
+            
+            return score;
+        }
+        
+        // Render recommended cards (unchanged)
+        function renderRecommended() {
+            const container = document.getElementById("recommended-grid")
+            container.innerHTML = ""
+            
+            const recommendedList = restaurants.slice(0, 4)
+            
+            recommendedList.forEach(restaurant => {
+                const cardHTML = `
+                <div onclick="showRestaurantDetail(${restaurant.id})" class="card-hover bg-white border border-gray-200 rounded-3xl overflow-hidden cursor-pointer">
+                    <div class="relative">
+                        <img src="${restaurant.image}" alt="${restaurant.name}" class="w-full h-48 object-cover">
+                        <div class="absolute top-3 right-3 bg-white text-orange-500 text-xs font-bold px-3 py-1 rounded-3xl flex items-center shadow">
+                            ★ ${restaurant.rating}
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="font-semibold text-lg">${restaurant.name}</h3>
+                                <div class="flex items-center gap-x-2 text-sm text-gray-500 mt-1">
+                                    <span class="capitalize">${restaurant.category}</span>
+                                    <span class="text-emerald-600">•</span>
+                                    <span>${restaurant.distance}</span>
+                                </div>
+                            </div>
+                            <div class="text-2xl">${'$'.repeat(restaurant.price)}</div>
+                        </div>
+                        <div class="mt-4 flex flex-wrap gap-1">
+                            ${restaurant.tags.map(tag => `<span class="text-xs bg-gray-100 px-3 py-1 rounded-3xl">${tag}</span>`).join('')}
+                        </div>
+                    </div>
+                </div>`
+                container.innerHTML += cardHTML
+            })
+        }
+        
+        // Render all restaurants (unchanged)
+        function renderAllRestaurants(filteredRestaurants = restaurants) {
+            const container = document.getElementById("all-restaurants-grid")
+            container.innerHTML = ""
+            
+            filteredRestaurants.forEach(restaurant => {
+                const cardHTML = `
+                <div onclick="showRestaurantDetail(${restaurant.id})" class="card-hover bg-white border border-gray-200 rounded-3xl overflow-hidden cursor-pointer">
+                    <div class="relative">
+                        <img src="${restaurant.image}" alt="${restaurant.name}" class="w-full h-48 object-cover">
+                        <div class="absolute top-3 right-3 bg-white text-orange-500 text-xs font-bold px-3 py-1 rounded-3xl flex items-center shadow">
+                            ★ ${restaurant.rating}
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="font-semibold text-lg">${restaurant.name}</h3>
+                                <div class="flex items-center gap-x-2 text-sm text-gray-500 mt-1">
+                                    <span class="capitalize">${restaurant.category}</span>
+                                    <span class="text-emerald-600">•</span>
+                                    <span>${restaurant.distance}</span>
+                                </div>
+                            </div>
+                            <div class="text-2xl">${'$'.repeat(restaurant.price)}</div>
+                        </div>
+                        <div class="mt-4 flex flex-wrap gap-1">
+                            ${restaurant.tags.map(tag => `<span class="text-xs bg-gray-100 px-3 py-1 rounded-3xl">${tag}</span>`).join('')}
+                        </div>
+                    </div>
+                </div>`
+                container.innerHTML += cardHTML
+            })
+            
+            if (filteredRestaurants.length === 0) {
+                container.innerHTML = `<div class="col-span-full text-center py-12 text-gray-400">No restaurants found matching your filters 😕<br>Try talking to TasteAI instead!</div>`
+            }
+        }
+        
+        // Filter logic (unchanged)
+        let activeCategories = ['all']
+        let activePrice = 'all'
+        let minRating = 0
+
+        function setCategoryButtonState(button, isActive) {
+            button.classList.toggle('active', isActive)
+            button.classList.toggle('bg-orange-500', isActive)
+            button.classList.toggle('text-white', isActive)
+            button.classList.toggle('bg-white', !isActive)
+            button.classList.toggle('text-gray-700', !isActive)
+        }
+
+        function setPriceButtonState(button, isActive) {
+            button.classList.toggle('active', isActive)
+            button.classList.toggle('bg-emerald-500', isActive)
+            button.classList.toggle('text-white', isActive)
+            button.classList.toggle('bg-white', !isActive)
+            button.classList.toggle('text-gray-700', !isActive)
+        }
+        
+        function toggleCategory(btn) {
+            const category = btn.getAttribute('data-category')
+            
+            if (category === 'all') {
+                activeCategories = ['all']
+                document.querySelectorAll('.category-btn').forEach(b => setCategoryButtonState(b, false))
+                setCategoryButtonState(btn, true)
+            } else {
+                if (activeCategories.includes('all')) activeCategories = []
+                
+                if (activeCategories.includes(category)) {
+                    activeCategories = activeCategories.filter(c => c !== category)
+                    setCategoryButtonState(btn, false)
+                } else {
+                    activeCategories.push(category)
+                    setCategoryButtonState(btn, true)
+                }
+                
+                if (activeCategories.length === 0) {
+                    activeCategories = ['all']
+                    setCategoryButtonState(document.querySelector('[data-category="all"]'), true)
+                } else {
+                    setCategoryButtonState(document.querySelector('[data-category="all"]'), false)
+                }
+            }
+            applyFilters()
+        }
+        
+        function togglePrice(btn) {
+            document.querySelectorAll('.price-btn').forEach(b => setPriceButtonState(b, false))
+            setPriceButtonState(btn, true)
+            activePrice = btn.getAttribute('data-price')
+            applyFilters()
+        }
+        
+        function updateRatingValue(slider) {
+            const valueEl = document.getElementById('rating-value')
+            minRating = parseFloat(slider.value)
+            valueEl.textContent = minRating === 0 ? 'Any' : minRating + '+'
+            applyFilters()
+        }
+        
+        function applyFilters() {
+            let filtered = restaurants
+            
+            if (!activeCategories.includes('all')) {
+                filtered = filtered.filter(r => activeCategories.includes(r.category))
+            }
+            
+            if (activePrice !== 'all') {
+                filtered = filtered.filter(r => r.price <= parseInt(activePrice))
+            }
+            
+            if (minRating > 0) {
+                filtered = filtered.filter(r => r.rating >= minRating)
+            }
+            
+            renderAllRestaurants(filtered)
+        }
+        
+        function resetFilters() {
+            activeCategories = ['all']
+            activePrice = 'all'
+            minRating = 0
+            
+            document.querySelectorAll('.category-btn').forEach(b => {
+                setCategoryButtonState(b, b.getAttribute('data-category') === 'all')
+            })
+            
+            document.querySelectorAll('.price-btn').forEach(b => {
+                setPriceButtonState(b, b.getAttribute('data-price') === 'all')
+            })
+            
+            document.getElementById('rating-slider').value = 0
+            document.getElementById('rating-value').textContent = 'Any'
+            
+            renderAllRestaurants(restaurants)
+        }
+        
+        // Simple carousel for recommended (unchanged)
+        let currentSlide = 0
+        function nextSlide() {
+            currentSlide = (currentSlide + 1) % 4
+            renderRecommended()
+        }
+        function prevSlide() {
+            currentSlide = (currentSlide - 1 + 4) % 4
+            renderRecommended()
+        }
+        
+        // Restaurant detail modal (unchanged)
+        function showRestaurantDetail(id) {
+            const restaurant = restaurants.find(r => r.id === id)
+            if (!restaurant) return
+            
+            const detailHTML = `
+            <div class="fixed inset-0 bg-black/70 z-[10000] flex items-center justify-center">
+                <div onclick="event.stopImmediatePropagation()" class="bg-white rounded-3xl max-w-lg w-full mx-4 overflow-hidden">
+                    <img src="${restaurant.image}" class="w-full h-64 object-cover">
+                    <div class="p-6">
+                        <div class="flex justify-between">
+                            <h2 class="text-3xl font-semibold">${restaurant.name}</h2>
+                            <div class="text-right">
+                                <div class="text-3xl">★ ${restaurant.rating}</div>
+                                <div class="text-emerald-600">${restaurant.distance}</div>
+                            </div>
+                        </div>
+                        <p class="text-gray-500 capitalize">${restaurant.category} • ${'$'.repeat(restaurant.price)}</p>
+                        <div class="my-6 flex gap-2">${restaurant.tags.map(t => `<span class="px-4 py-1 bg-gray-100 rounded-3xl text-sm">${t}</span>`).join('')}</div>
+                        <button onclick="this.closest('.fixed').remove(); openAIChat()" class="w-full py-4 bg-orange-500 hover:bg-orange-600 text-white rounded-3xl text-lg font-medium">Ask TasteAI for more info or alternatives</button>
+                        <button onclick="this.closest('.fixed').remove()" class="mt-3 w-full py-4 border text-gray-500 rounded-3xl">Close</button>
+                    </div>
+                </div>
+            </div>`
+            const modal = document.createElement('div')
+            modal.innerHTML = detailHTML
+            document.body.appendChild(modal)
+        }
+        
+        // AI CHATBOT LOGIC - UPGRADED VERSION
+        function openAIChat() {
+            const modal = document.getElementById('ai-chat-modal')
+            modal.classList.remove('hidden')
+            modal.classList.add('flex')
+            
+            const messagesContainer = document.getElementById('chat-messages')
+            if (messagesContainer.children.length === 0) {
+                messagesContainer.innerHTML = `
+                <div class="flex justify-start">
+                    <div class="message bg-white px-5 py-3 rounded-3xl rounded-tl-none shadow">
+                        👋 Hi! I'm TasteAI, your personal restaurant genius in Tunis.<br>
+                        What are you craving today? Italian? Sushi? Something spicy? Or tell me your mood/budget!
+                    </div>
+                </div>`
+            }
+        }
+        
+        function closeAIChat() {
+            const modal = document.getElementById('ai-chat-modal')
+            modal.classList.add('hidden')
+            modal.classList.remove('flex')
+        }
+        
+        function sendMessage(e) {
+            e.preventDefault()
+            const input = document.getElementById('chat-input')
+            const message = input.value.trim()
+            if (!message) return
+            
+            const messagesContainer = document.getElementById('chat-messages')
+            
+            // User message
+            const userHTML = `
+            <div class="flex justify-end">
+                <div class="message bg-orange-500 text-white px-5 py-3 rounded-3xl rounded-tr-none">
+                    ${message}
+                </div>
+            </div>`
+            messagesContainer.innerHTML += userHTML
+            messagesContainer.scrollTop = messagesContainer.scrollHeight
+            
+            input.value = ''
+            
+            // Simulate AI thinking (slightly faster now)
+            setTimeout(() => {
+                const lowerMsg = message.toLowerCase()
+                
+                // Relevance keywords (expanded)
+                const relevantKeywords = [
+                    'food','eat','restaurant','crave','dinner','lunch','breakfast','tunis','near','close',
+                    'cheap','budget','spicy','vegan','vegetarian','halal','italian','japanese','sushi','pasta',
+                    'burger','indian','chinese','mexican','bakery','steak','pizza','curry','taco','coffee',
+                    'romantic','date','quick','fast','best','recommend'
+                ]
+                
+                const hasRelevantKeyword = relevantKeywords.some(kw => lowerMsg.includes(kw))
+                const wordCount = lowerMsg.split(/\s+/).length
+                const isVeryShort = wordCount < 2 && message.length < 8
+                
+                let aiResponse = ''
+                
+                // 1. NONSENSE / IRRELEVANT DETECTION (new)
+                if (isVeryShort && !hasRelevantKeyword) {
+                    aiResponse = "Hmm, not sure what you mean 😅. I'm TasteAI – I only help with restaurants in Tunis. Try asking about food, cuisines, or your mood!"
+                } 
+                else if (!hasRelevantKeyword) {
+                    aiResponse = "Sorry, I didn't understand that one. I'm specialized in restaurant suggestions in Tunis. Could you rephrase? e.g. 'Italian near me', 'spicy vegan food', or 'romantic dinner under 30 TND'?"
+                } 
+                // 2. GREETINGS
+                else if (lowerMsg.includes('hi') || lowerMsg.includes('hello') || lowerMsg.includes('hey') || lowerMsg.includes('salut')) {
+                    aiResponse = "👋 Hey there! Ready to find your next perfect meal in Tunis? What's on your mind today?"
+                } 
+                // 3. THANKS
+                else if (lowerMsg.includes('thank') || lowerMsg.includes('merci') || lowerMsg.includes('shukran')) {
+                    aiResponse = "You're very welcome! 🍽️ Happy to help. Anything else you'd like to know about restaurants in Tunis?"
+                } 
+                // 4. DIETARY / MOOD SPECIFIC (new & smarter)
+                else if (lowerMsg.includes('vegan') || lowerMsg.includes('vegetarian') || lowerMsg.includes('plant')) {
+                    aiResponse = "🌱 Looking for plant-based options? <strong>Spice Garden</strong> has amazing vegetarian curries (4.7★). <strong>La Boulangerie</strong> also has fresh veggie-friendly pastries. Want more vegan spots or filters?"
+                } 
+                else if (lowerMsg.includes('romantic') || lowerMsg.includes('date') || lowerMsg.includes('anniversary')) {
+                    aiResponse = "💕 Romantic night? <strong>Bella Italia</strong> is perfect for a cozy pasta dinner, or go upscale with <strong>Prime Steakhouse</strong>. Both are great date spots in Tunis!"
+                } 
+                else if (lowerMsg.includes('quick') || lowerMsg.includes('fast') || lowerMsg.includes('hurry') || lowerMsg.includes('lunch')) {
+                    aiResponse = "⏱️ In a rush? <strong>The Burger Joint</strong> (1.2 km) or <strong>La Boulangerie</strong> (0.9 km) are super fast and tasty. Ready to go?"
+                } 
+                // 5. CLASSIC CUISINE MATCHES (improved with more options)
+                else if (lowerMsg.includes('italian') || lowerMsg.includes('pasta') || lowerMsg.includes('pizza')) {
+                    aiResponse = `🍝 Italian craving detected! Top recommendation: <strong>Bella Italia</strong> (4.8★, 2.1 km). Their carbonara is legendary. Want alternatives, a reservation link, or something similar?`
+                } 
+                else if (lowerMsg.includes('sushi') || lowerMsg.includes('japanese')) {
+                    aiResponse = `🍣 Sushi mood? <strong>Tokyo Sushi Bar</strong> (4.9★, 3.4 km) is the best in Tunis. Fresh tuna rolls are on point today. Other Asian options?`
+                } 
+                else if (lowerMsg.includes('burger') || lowerMsg.includes('fastfood')) {
+                    aiResponse = `🍔 Burger time! <strong>The Burger Joint</strong> is only 1.2 km away (4.5★). Secret sauce included. Need more fast options?`
+                } 
+                else if (lowerMsg.includes('indian') || lowerMsg.includes('curry') || lowerMsg.includes('spicy')) {
+                    aiResponse = `🔥 Spice lovers unite! <strong>Spice Garden</strong> (4.7★) has the best butter chicken and vegetarian curries. How spicy are we talking?`
+                } 
+                // 6. BUDGET / LOCATION REQUESTS
+                else if (lowerMsg.includes('cheap') || lowerMsg.includes('budget') || lowerMsg.includes('tnd') || lowerMsg.includes('under')) {
+                    aiResponse = `💰 Budget-friendly picks (under ~20 TND):<br>• The Burger Joint<br>• El Taquito (Mexican)<br>• La Boulangerie (Bakery)<br>Any specific cuisine or dietary need?`
+                } 
+                else if (lowerMsg.includes('near') || lowerMsg.includes('close') || lowerMsg.includes('distance')) {
+                    aiResponse = `📍 Closest right now in Tunis:<br>• La Boulangerie (0.9 km)<br>• The Burger Joint (1.2 km)<br>• Bella Italia (2.1 km)<br>Want them sorted by rating or price?`
+                } 
+                // 7. ULTIMATE SMART FALLBACK with scoring (new)
+                else {
+                    let bestRestaurant = null
+                    let bestScore = -1
+                    
+                    restaurants.forEach(r => {
+                        const score = calculateMatchScore(lowerMsg, r.id)
+                        if (score > bestScore) {
+                            bestScore = score
+                            bestRestaurant = r
+                        }
+                    })
+                    
+                    if (bestScore > 0 && bestRestaurant) {
+                        aiResponse = `Got it! Based on your message, <strong>${bestRestaurant.name}</strong> is the best match for you – ${bestRestaurant.rating}★ ${bestRestaurant.category} spot just ${bestRestaurant.distance} away in Tunis. Want me to show similar places or more details?`
+                    } else {
+                        // Truly random but still helpful
+                        const random = restaurants[Math.floor(Math.random() * restaurants.length)]
+                        aiResponse = `Not 100% sure what you're looking for, but I think you'll love <strong>${random.name}</strong> – ${random.rating}★ ${random.category} just ${random.distance} away. Tell me more about your taste (cuisine, budget, mood...) and I'll refine it!`
+                    }
+                }
+                
+                const aiHTML = `
+                <div class="flex justify-start">
+                    <div class="message bg-white px-5 py-3 rounded-3xl rounded-tl-none shadow">
+                        ${aiResponse}
+                    </div>
+                </div>`
+                messagesContainer.innerHTML += aiHTML
+                messagesContainer.scrollTop = messagesContainer.scrollHeight
+            }, 700)
+        }
+        
+        function triggerAIFromSearch(e) {
+            e.stopImmediatePropagation()
+            const searchInput = document.getElementById('search-input')
+            if (searchInput.value.trim()) {
+                closeAIChat()
+                openAIChat()
+                setTimeout(() => {
+                    const chatInput = document.getElementById('chat-input')
+                    if (chatInput) chatInput.value = searchInput.value
+                }, 500)
+            } else {
+                openAIChat()
+            }
+        }
+        
+        function focusSearch() {
+            document.getElementById('search-input').focus()
+        }
+        
+        // Initialize everything
+        window.onload = function() {
+            initializeTailwind()
+            renderRecommended()
+            renderAllRestaurants()
+            
+            console.log('%c✅ TasteMatch frontend with UPGRADED TasteAI ready!', 'color:#f97316; font-family:Space Grotesk; font-size:18px')
+            console.log('👉 The AI now handles nonsense, gives smarter & more natural replies, and uses keyword scoring!')
+        }
+    </script>
+</body>
+</html>

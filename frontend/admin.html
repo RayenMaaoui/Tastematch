@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard • TasteMatch</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap');
+        
+        .logo-font { font-family: 'Space Grotesk', sans-serif; }
+        body { background-color: #f8fafc; }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+        }
+
+        /* FIXED GROWTH CHART */
+        .growth-container {
+            height: 260px;
+            display: flex;
+            align-items: flex-end;
+            gap: 22px;
+            padding-bottom: 32px; /* Extra space for month labels */
+            position: relative;
+        }
+
+        .bar-column {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        .stacked-bar {
+            width: 34px;
+            border-radius: 10px 10px 0 0;
+            overflow: hidden;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.08);
+        }
+
+        .users-part {
+            background-color: #f97316;
+        }
+
+        .restaurants-part {
+            background-color: #14b8a6;
+        }
+
+        .month-label {
+            position: absolute;
+            bottom: -24px;
+            font-size: 11px;
+            color: #64748b;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body class="font-sans">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div class="w-72 bg-white border-r flex flex-col">
+            <div class="p-6 border-b flex items-center gap-3">
+                <div class="w-10 h-10 bg-orange-500 rounded-2xl flex items-center justify-center text-white text-3xl font-bold">T</div>
+                <div class="logo-font text-2xl tracking-tight">Taste<span class="text-emerald-600">Match</span></div>
+            </div>
+
+            <div class="flex-1 px-4 py-8 space-y-1">
+                <a href="#" class="flex items-center gap-3 px-5 py-3 bg-orange-50 text-orange-600 rounded-3xl font-medium">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="flex items-center gap-3 px-5 py-3 hover:bg-gray-100 rounded-3xl text-gray-700">
+                    <i class="fa-solid fa-utensils"></i>
+                    <span>Restaurants</span>
+                </a>
+                <a href="#" class="flex items-center gap-3 px-5 py-3 hover:bg-gray-100 rounded-3xl text-gray-700">
+                    <i class="fa-solid fa-users"></i>
+                    <span>Users</span>
+                </a>
+                <a href="#" class="flex items-center gap-3 px-5 py-3 hover:bg-gray-100 rounded-3xl text-gray-700">
+                    <i class="fa-solid fa-star"></i>
+                    <span>Reviews</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 overflow-auto">
+            <div class="bg-white border-b px-8 py-5 flex items-center justify-between sticky top-0 z-10">
+                <h1 class="text-2xl font-semibold">Dashboard</h1>
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-2 bg-white border rounded-3xl px-4 py-2 text-sm">
+                        <i class="fa-solid fa-calendar"></i>
+                        April 2026
+                    </div>
+                    <div class="w-9 h-9 bg-gradient-to-br from-orange-400 to-emerald-500 rounded-2xl flex items-center justify-center text-white font-bold">A</div>
+                </div>
+            </div>
+
+            <div class="p-8">
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="stat-card bg-white rounded-3xl p-6 border flex justify-between items-start">
+                        <div>
+                            <div class="text-4xl">👥</div>
+                            <div class="text-4xl font-semibold mt-4">12,543</div>
+                            <div class="text-gray-500 text-sm">Total Users</div>
+                        </div>
+                        <span class="text-emerald-500 text-sm font-medium">+12.5%</span>
+                    </div>
+
+                    <div class="stat-card bg-white rounded-3xl p-6 border flex justify-between items-start">
+                        <div>
+                            <div class="text-4xl">🍽️</div>
+                            <div class="text-4xl font-semibold mt-4">324</div>
+                            <div class="text-gray-500 text-sm">Restaurants</div>
+                        </div>
+                        <span class="text-emerald-500 text-sm font-medium">+8.2%</span>
+                    </div>
+
+                    <div class="stat-card bg-white rounded-3xl p-6 border flex justify-between items-start">
+                        <div>
+                            <div class="text-4xl">⭐</div>
+                            <div class="text-4xl font-semibold mt-4">8,942</div>
+                            <div class="text-gray-500 text-sm">Reviews</div>
+                        </div>
+                        <span class="text-emerald-500 text-sm font-medium">+15.3%</span>
+                    </div>
+
+                    <div class="stat-card bg-white rounded-3xl p-6 border flex justify-between items-start">
+                        <div>
+                            <div class="text-4xl">🔥</div>
+                            <div class="text-4xl font-semibold mt-4">1,234</div>
+                            <div class="text-gray-500 text-sm">Active Today</div>
+                        </div>
+                        <span class="text-emerald-500 text-sm font-medium">+5.7%</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Growth Overview - FIXED -->
+                    <div class="bg-white rounded-3xl p-7 border">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="font-semibold text-lg">Growth Overview</h2>
+                            <div class="flex items-center gap-x-6 text-sm">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-3 h-3 bg-orange-500 rounded"></div>
+                                    <span>Users</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <div class="w-3 h-3 bg-teal-500 rounded"></div>
+                                    <span>Restaurants</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="growth-container">
+                            <!-- Jan -->
+                            <div class="bar-column">
+                                <div class="stacked-bar" style="height: 165px">
+                                    <div class="users-part" style="height: 42%"></div>
+                                    <div class="restaurants-part" style="height: 58%"></div>
+                                </div>
+                                <div class="month-label">Jan</div>
+                            </div>
+                            <!-- Feb -->
+                            <div class="bar-column">
+                                <div class="stacked-bar" style="height: 125px">
+                                    <div class="users-part" style="height: 35%"></div>
+                                    <div class="restaurants-part" style="height: 65%"></div>
+                                </div>
+                                <div class="month-label">Feb</div>
+                            </div>
+                            <!-- Mar -->
+                            <div class="bar-column">
+                                <div class="stacked-bar" style="height: 185px">
+                                    <div class="users-part" style="height: 44%"></div>
+                                    <div class="restaurants-part" style="height: 56%"></div>
+                                </div>
+                                <div class="month-label">Mar</div>
+                            </div>
+                            <!-- Apr -->
+                            <div class="bar-column">
+                                <div class="stacked-bar" style="height: 235px">
+                                    <div class="users-part" style="height: 52%"></div>
+                                    <div class="restaurants-part" style="height: 48%"></div>
+                                </div>
+                                <div class="month-label">Apr</div>
+                            </div>
+                            <!-- May -->
+                            <div class="bar-column">
+                                <div class="stacked-bar" style="height: 228px">
+                                    <div class="users-part" style="height: 47%"></div>
+                                    <div class="restaurants-part" style="height: 53%"></div>
+                                </div>
+                                <div class="month-label">May</div>
+                            </div>
+                            <!-- Jun -->
+                            <div class="bar-column">
+                                <div class="stacked-bar" style="height: 248px">
+                                    <div class="users-part" style="height: 49%"></div>
+                                    <div class="restaurants-part" style="height: 51%"></div>
+                                </div>
+                                <div class="month-label">Jun</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Restaurant Categories -->
+                    <div class="bg-white rounded-3xl p-7 border">
+                        <h2 class="font-semibold text-lg mb-6">Restaurant Categories</h2>
+                        <div class="flex justify-center my-6">
+                            <div class="relative w-64 h-64">
+                                <div class="w-64 h-64 rounded-full" 
+                                     style="background: conic-gradient(#f97316 0deg 162deg, #14b8a6 162deg 270deg, #a855f7 270deg 324deg, #3b82f6 324deg 360deg);">
+                                </div>
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <div class="w-40 h-40 bg-white rounded-full shadow flex items-center justify-center">
+                                        <div class="text-center">
+                                            <div class="text-4xl font-semibold">324</div>
+                                            <div class="text-xs text-gray-500">Total</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 text-sm mt-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-4 h-4 bg-orange-500 rounded"></div>
+                                Italian 45%
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <div class="w-4 h-4 bg-teal-500 rounded"></div>
+                                Japanese 30%
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <div class="w-4 h-4 bg-purple-500 rounded"></div>
+                                Fast Food 15%
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <div class="w-4 h-4 bg-blue-500 rounded"></div>
+                                Others 10%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Restaurants -->
+                <div class="mt-8 bg-white rounded-3xl border p-7">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="font-semibold text-lg">Recent Restaurants</h2>
+                        <button onclick="addRestaurant()" 
+                                class="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-3xl text-sm font-medium flex items-center gap-2">
+                            <i class="fa-solid fa-plus"></i> Add New
+                        </button>
+                    </div>
+
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b text-gray-500">
+                                <th class="py-4 text-left">Name</th>
+                                <th class="py-4 text-left">Category</th>
+                                <th class="py-4 text-left">Rating</th>
+                                <th class="py-4 text-left">Status</th>
+                                <th class="py-4 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="restaurant-table"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const restaurants = [
+            { name: "Bella Italia", category: "Italian", rating: "4.8", status: "Active" },
+            { name: "Tokyo Sushi Bar", category: "Japanese", rating: "4.9", status: "Active" },
+            { name: "The Burger Joint", category: "Fast Food", rating: "4.5", status: "Active" },
+            { name: "Spice Garden", category: "Indian", rating: "4.7", status: "Pending" },
+            { name: "La Boulangerie", category: "Bakery", rating: "4.6", status: "Active" }
+        ];
+
+        function renderTable() {
+            const tbody = document.getElementById('restaurant-table');
+            tbody.innerHTML = restaurants.map((r, i) => `
+                <tr class="border-b last:border-none hover:bg-gray-50">
+                    <td class="py-5 font-medium">${r.name}</td>
+                    <td class="py-5 text-gray-600">${r.category}</td>
+                    <td class="py-5 text-orange-500">★ ${r.rating}</td>
+                    <td class="py-5">
+                        <span class="px-5 py-1 text-xs font-medium rounded-full ${r.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : 'bg-yellow-100 text-yellow-700'}">
+                            ${r.status}
+                        </span>
+                    </td>
+                    <td class="py-5 text-right space-x-4">
+                        <button onclick="editRestaurant(${i})" class="text-orange-500 hover:underline">Edit</button>
+                        <button onclick="deleteRestaurant(${i})" class="text-red-500 hover:underline">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function addRestaurant() {
+            const name = prompt("Enter restaurant name:");
+            if (name) {
+                restaurants.unshift({
+                    name: name,
+                    category: "Other",
+                    rating: (4.3 + Math.random()).toFixed(1),
+                    status: "Pending"
+                });
+                renderTable();
+            }
+        }
+
+        function editRestaurant(i) { alert(`Editing ${restaurants[i].name}`); }
+        function deleteRestaurant(i) {
+            if (confirm(`Delete ${restaurants[i].name}?`)) {
+                restaurants.splice(i, 1);
+                renderTable();
+            }
+        }
+
+        window.onload = () => {
+            renderTable();
+            console.log('%c✅ Growth Overview Chart - Bars fixed and labels visible!', 'color:#f97316; font-weight:bold');
+        };
+    </script>
+</body>
+</html>

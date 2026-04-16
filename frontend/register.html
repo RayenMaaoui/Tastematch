@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account • TasteMatch</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap');
+        
+        .logo-font {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #fff7ed 0%, #ecfdf5 100%);
+        }
+
+        .card {
+            box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.15);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center font-sans">
+    <div class="max-w-md w-full mx-auto px-6">
+        <!-- Logo -->
+        <div class="flex justify-center mb-8">
+            <div class="flex items-center gap-x-3">
+                <div class="w-12 h-12 bg-orange-500 rounded-3xl flex items-center justify-center text-white text-4xl font-bold shadow-inner">T</div>
+                <div class="logo-font text-4xl tracking-tighter">
+                    <span class="text-orange-500">Taste</span><span class="text-emerald-600">Match</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card -->
+        <div class="bg-white rounded-3xl card p-8 md:p-10">
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-semibold text-gray-900">Create an account</h1>
+                <p class="text-gray-500 mt-2">Join TasteMatch today</p>
+            </div>
+
+            <form id="register-form" onsubmit="handleRegister(event)">
+                <!-- Full Name -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                    <input 
+                        type="text" 
+                        id="fullname"
+                        placeholder="John Doe"
+                        required
+                        class="w-full px-5 py-4 bg-gray-100 border border-transparent focus:border-orange-300 focus:bg-white rounded-2xl outline-none text-base">
+                </div>
+
+                <!-- Email -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <input 
+                        type="email" 
+                        id="email"
+                        placeholder="your@email.com"
+                        required
+                        class="w-full px-5 py-4 bg-gray-100 border border-transparent focus:border-orange-300 focus:bg-white rounded-2xl outline-none text-base">
+                </div>
+
+                <!-- Password -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                    <div class="relative">
+                        <input 
+                            type="password" 
+                            id="password"
+                            placeholder="••••••••"
+                            required
+                            class="w-full px-5 py-4 bg-gray-100 border border-transparent focus:border-orange-300 focus:bg-white rounded-2xl outline-none text-base">
+                        <button type="button" onclick="togglePassword('password', 'eye1')" 
+                                class="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                            <i class="fa-solid fa-eye" id="eye1"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Confirm Password -->
+                <div class="mb-8">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
+                    <div class="relative">
+                        <input 
+                            type="password" 
+                            id="confirm-password"
+                            placeholder="••••••••"
+                            required
+                            class="w-full px-5 py-4 bg-gray-100 border border-transparent focus:border-orange-300 focus:bg-white rounded-2xl outline-none text-base">
+                        <button type="button" onclick="togglePassword('confirm-password', 'eye2')" 
+                                class="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                            <i class="fa-solid fa-eye" id="eye2"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Sign Up Button -->
+                <button type="submit"
+                        class="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-4 rounded-3xl text-lg shadow-lg shadow-orange-500/30">
+                    Sign Up
+                </button>
+            </form>
+
+            <!-- Terms -->
+            <div class="text-center text-xs text-gray-500 mt-6">
+                By signing up, you agree to our 
+                <a href="#" class="text-orange-500 hover:underline">Terms of Service</a> and 
+                <a href="#" class="text-orange-500 hover:underline">Privacy Policy</a>
+            </div>
+
+            <!-- Divider -->
+            <div class="my-8 flex items-center gap-x-4">
+                <div class="flex-1 h-px bg-gray-200"></div>
+                <span class="text-gray-400 text-sm">OR</span>
+                <div class="flex-1 h-px bg-gray-200"></div>
+            </div>
+
+            <!-- Social Sign Up -->
+            <div class="grid grid-cols-2 gap-4 mb-8">
+                <button onclick="socialRegister('google')" 
+                        class="flex items-center justify-center gap-x-3 border border-gray-300 hover:border-gray-400 py-4 rounded-3xl">
+                    <i class="fa-brands fa-google text-xl"></i>
+                    <span class="font-medium">Google</span>
+                </button>
+                <button onclick="socialRegister('facebook')" 
+                        class="flex items-center justify-center gap-x-3 border border-gray-300 hover:border-gray-400 py-4 rounded-3xl">
+                    <i class="fa-brands fa-facebook-f text-xl"></i>
+                    <span class="font-medium">Facebook</span>
+                </button>
+            </div>
+
+            <!-- Already have account -->
+            <div class="text-center text-sm text-gray-600">
+                Already have an account? 
+                <a href="login.html" class="text-orange-500 hover:text-orange-600 font-semibold">Sign in</a>
+            </div>
+        </div>
+
+        <!-- Back to home -->
+        <div class="text-center mt-8">
+            <a href="index.html" 
+               class="text-gray-500 hover:text-gray-700 flex items-center justify-center gap-x-2">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span>Back to TasteMatch</span>
+            </a>
+        </div>
+    </div>
+
+    <script>
+        function togglePassword(fieldId, eyeId) {
+            const passwordField = document.getElementById(fieldId)
+            const eyeIcon = document.getElementById(eyeId)
+            
+            if (passwordField.type === 'password') {
+                passwordField.type = 'text'
+                eyeIcon.classList.replace('fa-eye', 'fa-eye-slash')
+            } else {
+                passwordField.type = 'password'
+                eyeIcon.classList.replace('fa-eye-slash', 'fa-eye')
+            }
+        }
+
+        function handleRegister(e) {
+            e.preventDefault()
+            
+            const fullname = document.getElementById('fullname').value
+            const email = document.getElementById('email').value
+            const password = document.getElementById('password').value
+            const confirmPassword = document.getElementById('confirm-password').value
+
+            if (password !== confirmPassword) {
+                alert("❌ Passwords do not match!")
+                return
+            }
+
+            if (fullname && email && password) {
+                const btn = e.target.querySelector('button')
+                const originalText = btn.textContent
+                
+                btn.innerHTML = `
+                    <i class="fa-solid fa-spinner fa-spin"></i> Creating account...
+                `
+                btn.disabled = true
+
+                setTimeout(() => {
+                    alert(`🎉 Account created successfully!\n\nWelcome to TasteMatch, ${fullname}!\n\nYou can now sign in.`)
+                    window.location.href = "login.html"
+                }, 1800)
+            }
+        }
+
+        function socialRegister(provider) {
+            alert(`🔗 Creating account with ${provider}...\n\n(This is a demo - in production it would use OAuth)`)
+        }
+
+        console.log('%cTasteMatch Register Page Loaded ✅', 'color:#f97316; font-weight:bold')
+    </script>
+</body>
+</html>
