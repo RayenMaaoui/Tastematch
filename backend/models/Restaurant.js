@@ -22,8 +22,20 @@ const orderItemSchema = new mongoose.Schema(
 
 const orderSchema = new mongoose.Schema(
   {
+    customer: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
     customerName: { type: String, trim: true, default: "Guest" },
+    subtotalAmount: { type: Number, required: true, min: 0, default: 0 },
+    discountAmount: { type: Number, required: true, min: 0, default: 0 },
     totalAmount: { type: Number, required: true, min: 0, default: 0 },
+    discountSummary: { type: String, trim: true, default: "" },
+    couponApplied: { type: Boolean, default: false },
+    estimatedReadyAt: { type: Date, default: null },
+    readyNotificationSentAt: { type: Date, default: null },
+    cancelledAt: { type: Date, default: null },
     status: {
       type: String,
       enum: ["pending", "paid", "cancelled"],
@@ -33,6 +45,19 @@ const orderSchema = new mongoose.Schema(
     createdAt: { type: Date, default: Date.now },
   },
   { _id: true },
+);
+
+const ratingSchema = new mongoose.Schema(
+  {
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    value: { type: Number, required: true, min: 1, max: 5 },
+    updatedAt: { type: Date, default: Date.now },
+  },
+  { _id: false },
 );
 
 const restaurantSchema = new mongoose.Schema(
@@ -50,6 +75,10 @@ const restaurantSchema = new mongoose.Schema(
     image: { type: String, default: "" },
     price: { type: Number, default: 2, min: 1, max: 3 },
     rating: { type: Number, default: 4.5, min: 0, max: 5 },
+    ratings: {
+      type: [ratingSchema],
+      default: [],
+    },
     lat: { type: Number, default: null },
     lng: { type: Number, default: null },
     tags: {

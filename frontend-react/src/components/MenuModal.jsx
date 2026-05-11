@@ -1,22 +1,90 @@
+const MENU_SECTIONS = [
+  {
+    id: "pizza",
+    label: "Pizzas",
+    terms: ["pizza", "margherita", "pepperoni", "quattro", "calzone"],
+  },
+  {
+    id: "burger",
+    label: "Burgers & Sandwiches",
+    terms: ["burger", "sandwich", "tacos", "wrap", "shawarma", "kebab", "panini"],
+  },
+  {
+    id: "grill",
+    label: "Grill & Meat",
+    terms: ["grill", "steak", "meat", "beef", "lamb", "chicken", "bbq", "ribs", "brochette"],
+  },
+  {
+    id: "pasta",
+    label: "Pasta",
+    terms: ["pasta", "spaghetti", "lasagna", "ravioli", "penne", "tagliatelle"],
+  },
+  {
+    id: "seafood",
+    label: "Seafood",
+    terms: ["fish", "seafood", "shrimp", "calamari", "salmon", "tuna", "octopus"],
+  },
+  {
+    id: "drinks",
+    label: "Drinks",
+    terms: ["drink", "juice", "smoothie", "milkshake", "coffee", "tea", "soda", "lemonade", "mojito"],
+  },
+  {
+    id: "sweets",
+    label: "Sweets",
+    terms: ["dessert", "cake", "sweet", "chocolate", "crepe", "waffle", "cookie", "ice cream", "pastry"],
+  },
+];
+
+function getMenuSection(item) {
+  const text = `${item.name || ""} ${item.description || ""}`.toLowerCase();
+  return (
+    MENU_SECTIONS.find((section) =>
+      section.terms.some((term) => text.includes(term)),
+    ) || { id: "other", label: "Other Dishes" }
+  );
+}
+
+function groupMenuItems(items = []) {
+  const groups = new Map();
+
+  for (const item of items) {
+    const section = getMenuSection(item);
+    if (!groups.has(section.id)) {
+      groups.set(section.id, { ...section, items: [] });
+    }
+    groups.get(section.id).items.push(item);
+  }
+
+  return [...groups.values()].sort((a, b) => {
+    const aIndex = MENU_SECTIONS.findIndex((section) => section.id === a.id);
+    const bIndex = MENU_SECTIONS.findIndex((section) => section.id === b.id);
+    return (aIndex === -1 ? 999 : aIndex) - (bIndex === -1 ? 999 : bIndex);
+  });
+}
+
 export default function MenuModal({
   viewingMenu,
   setViewingMenu,
   setViewingImage,
   setShowChat,
+  onAddToBasket,
+  cartItems = [],
 }) {
   if (!viewingMenu) return null;
 
   const menuItems = viewingMenu.menu || [];
+  const menuGroups = groupMenuItems(menuItems);
 
   return (
     <div
       className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
       onClick={() => setViewingMenu(null)}>
       <div
-        className="w-full max-w-3xl max-h-[90vh] overflow-hidden rounded-[28px] bg-white shadow-2xl flex flex-col"
+        className="w-full max-w-5xl h-[92vh] overflow-hidden rounded-[28px] bg-white shadow-2xl flex flex-col"
         onClick={(e) => e.stopPropagation()}>
         {/* Header */}
-        <div className="relative bg-gradient-to-r from-orange-500 to-emerald-600 px-8 py-7 text-white">
+        <div className="relative bg-gradient-to-r from-orange-500 via-orange-500 to-emerald-600 px-8 py-7 text-white">
           <button
             onClick={() => setViewingMenu(null)}
             className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 transition flex items-center justify-center text-lg">
@@ -47,14 +115,36 @@ export default function MenuModal({
         </div>
 
         {/* Menu body */}
-        <div className="flex-1 overflow-y-auto bg-gradient-to-b from-orange-50/70 to-white px-6 md:px-8 py-6">
+        <div className="flex-1 overflow-y-auto bg-gradient-to-b from-orange-50/70 to-white px-5 md:px-8 py-7">
           {menuItems.length > 0 ? (
-            <div className="space-y-4">
-              {menuItems.map((item, idx) => (
+            <div className="space-y-9">
+              {menuGroups.map((group) => (
+                <section key={group.id} className="space-y-4 scroll-mt-6">
+                  <div className="rounded-2xl border border-orange-100 bg-white px-5 py-4 shadow-sm">
+                    <div className="flex items-center justify-between gap-3">
+                      <h2 className="text-xl font-bold text-gray-900">
+                        {group.label}
+                      </h2>
+                      <span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-600">
+                        {group.items.length} item
+                        {group.items.length === 1 ? "" : "s"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+              {group.items.map((item, idx) => {
+                const cartEntry = cartItems.find(
+                  (cartItem) =>
+                    cartItem.restaurantId === viewingMenu._id &&
+                    cartItem.dishName === item.name,
+                );
+
+                return (
                 <div
                   key={`menu-item-${item.name}-${idx}`}
                   className="bg-white border border-orange-100 rounded-3xl p-4 md:p-5 shadow-sm hover:shadow-md transition">
-                  <div className="flex items-center gap-4 md:gap-5">
+                  <div className="flex flex-col sm:flex-row sm:items-start gap-4 md:gap-5">
                     {/* Dish image */}
                     <div className="shrink-0">
                       {item.image ? (
@@ -62,10 +152,10 @@ export default function MenuModal({
                           src={item.image}
                           alt={item.name}
                           onClick={() => setViewingImage(item)}
-                          className="w-24 h-24 md:w-28 md:h-28 rounded-2xl object-cover cursor-pointer border border-orange-100"
+                          className="w-full sm:w-32 h-40 sm:h-32 rounded-2xl object-cover cursor-pointer border border-orange-100"
                         />
                       ) : (
-                        <div className="w-24 h-24 md:w-28 md:h-28 rounded-2xl bg-gradient-to-br from-orange-100 to-orange-50 border border-orange-100 flex items-center justify-center text-3xl">
+                        <div className="w-full sm:w-32 h-40 sm:h-32 rounded-2xl bg-gradient-to-br from-orange-100 to-orange-50 border border-orange-100 flex items-center justify-center text-sm font-semibold text-gray-500">
                           🍽️
                         </div>
                       )}
@@ -73,20 +163,20 @@ export default function MenuModal({
 
                     {/* Dish details */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-4">
+                      <div className="flex flex-col gap-3">
                         <div className="min-w-0 flex-1">
-                          <h3 className="text-lg md:text-xl font-bold text-gray-900 leading-snug">
+                          <h3 className="text-xl md:text-2xl font-bold text-gray-900 leading-snug">
                             {item.name}
                           </h3>
 
                           {item.description && (
-                            <p className="mt-2 text-sm md:text-base text-gray-500 leading-relaxed">
+                            <p className="mt-2 text-sm md:text-base text-gray-600 leading-7">
                               {item.description}
                             </p>
                           )}
                         </div>
 
-                        <div className="shrink-0">
+                        <div className="shrink-0 self-start">
                           <div className="px-4 py-2 rounded-2xl bg-orange-50 border border-orange-100 text-orange-500 font-bold text-lg md:text-xl whitespace-nowrap">
                             {Number(item.price).toFixed(2)} TND
                           </div>
@@ -100,9 +190,37 @@ export default function MenuModal({
                           View image
                         </button>
                       )}
+
+                      <div className="mt-4 flex items-center justify-between gap-3">
+                        <button
+                          onClick={() =>
+                            onAddToBasket?.(viewingMenu, {
+                              dishName: item.name,
+                              unitPrice: Number(item.price) || 0,
+                              image: item.image || "",
+                            })
+                          }
+                          className="rounded-2xl bg-orange-500 hover:bg-orange-600 text-white px-4 py-2.5 text-sm font-semibold transition shadow-sm">
+                          Add to basket
+                        </button>
+
+                        {cartEntry ? (
+                          <span className="text-sm font-medium text-emerald-700">
+                            In basket: {cartEntry.quantity}
+                          </span>
+                        ) : (
+                          <span className="text-sm text-gray-400">
+                            Ready to order
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
+                );
+              })}
+                  </div>
+                </section>
               ))}
             </div>
           ) : (

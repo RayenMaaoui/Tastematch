@@ -1,5 +1,23 @@
 const mongoose = require('mongoose');
 
+const loyaltySchema = new mongoose.Schema({
+  restaurant: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Restaurant',
+    required: true
+  },
+  completedOrders: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  availableFreeOrders: {
+    type: Number,
+    default: 0,
+    min: 0
+  }
+}, { _id: false });
+
 const userSchema = new mongoose.Schema({
   fullName: {
     type: String,
@@ -39,6 +57,10 @@ const userSchema = new mongoose.Schema({
   },
   preferences: {
     type: [String],
+    default: []
+  },
+  loyalty: {
+    type: [loyaltySchema],
     default: []
   }
 }, { timestamps: true });

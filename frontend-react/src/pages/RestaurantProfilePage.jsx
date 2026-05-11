@@ -793,7 +793,7 @@ function readFile(file, cb) {
 function formatCurrency(v) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "USD",
+    currency: "TND",
   }).format(v || 0);
 }
 
@@ -913,6 +913,9 @@ export default function RestaurantProfilePage() {
   const [unsplashResults, setUnsplashResults] = useState(null);
   const [unsplashLoading, setUnsplashLoading] = useState(false);
   const [unsplashTarget, setUnsplashTarget] = useState(null);
+  const [pendingDishScrollIndex, setPendingDishScrollIndex] = useState(null);
+  const dishCardRefs = useRef([]);
+  const dishNameInputRefs = useRef([]);
 
   const selectedRestaurant = useMemo(
     () => restaurants.find((r) => r._id === selectedId) || null,
@@ -997,6 +1000,18 @@ export default function RestaurantProfilePage() {
     })();
   }, []);
 
+  useEffect(() => {
+    if (pendingDishScrollIndex == null) return;
+
+    const card = dishCardRefs.current[pendingDishScrollIndex];
+    const input = dishNameInputRefs.current[pendingDishScrollIndex];
+    if (!card) return;
+
+    card.scrollIntoView({ behavior: "smooth", block: "end" });
+    window.setTimeout(() => input?.focus(), 250);
+    setPendingDishScrollIndex(null);
+  }, [form.menu.length, pendingDishScrollIndex]);
+
   const updateField = (field, value) =>
     setForm((prev) => ({ ...prev, [field]: value }));
 
@@ -1009,12 +1024,21 @@ export default function RestaurantProfilePage() {
     }));
 
   const addMenuItem = () =>
-    setForm((prev) => ({
-      ...prev,
-      menu: [...prev.menu, { name: "", description: "", price: "", image: "" }],
-    }));
+    setForm((prev) => {
+      const nextIndex = prev.menu.length;
+      setPendingDishScrollIndex(nextIndex);
+      return {
+        ...prev,
+        menu: [
+          ...prev.menu,
+          { name: "", description: "", price: "", image: "" },
+        ],
+      };
+    });
 
-  const removeMenuItem = (index) =>
+  const removeMenuItem = (index) => {
+    if (!window.confirm("Are you sure you want to remove this dish?")) return;
+
     setForm((prev) => {
       const next = prev.menu.filter((_, idx) => idx !== index);
       return {
@@ -1024,6 +1048,7 @@ export default function RestaurantProfilePage() {
           : [{ name: "", description: "", price: "", image: "" }],
       };
     });
+  };
 
   const selectRestaurant = async (restaurant) => {
     setSelectedId(restaurant._id);
@@ -1937,7 +1962,12 @@ export default function RestaurantProfilePage() {
 
             <div className="tm-dishes">
               {form.menu.map((item, index) => (
-                <div key={index} className="tm-dish-card">
+                <div
+                  key={index}
+                  className="tm-dish-card"
+                  ref={(node) => {
+                    dishCardRefs.current[index] = node;
+                  }}>
                   <div className="tm-dish-preview">
                     <div className="tm-dish-image">
                       {item.image ? (
@@ -1967,6 +1997,9 @@ export default function RestaurantProfilePage() {
                       <div>
                         <label className="tm-label">Dish Name</label>
                         <input
+                          ref={(node) => {
+                            dishNameInputRefs.current[index] = node;
+                          }}
                           className="tm-input"
                           value={item.name}
                           onChange={(e) =>

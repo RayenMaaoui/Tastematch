@@ -6,9 +6,12 @@ export default function Navbar({
   search,
   onSearchChange,
   onChatOpen,
+  basketCount = 0,
+  onBasketOpen,
   onLogout,
 }) {
   const [showDropdown, setShowDropdown] = useState(false);
+  const displayName = session?.user?.fullName || session?.user?.name || "";
 
   const getInitials = (name) => {
     return name
@@ -69,6 +72,17 @@ export default function Navbar({
                 Talk to TasteAI
               </button>
 
+              <button
+                onClick={onBasketOpen}
+                className="relative bg-white hover:bg-orange-50 text-gray-700 px-4 py-3 rounded-2xl text-sm font-semibold shadow-sm border border-orange-100 transition">
+                Basket
+                {basketCount > 0 && (
+                  <span className="ml-2 inline-flex min-w-6 h-6 items-center justify-center rounded-full bg-orange-500 px-2 text-xs font-bold text-white">
+                    {basketCount}
+                  </span>
+                )}
+              </button>
+
               {!session && (
                 <a
                   href="/login"
@@ -106,10 +120,10 @@ export default function Navbar({
                       className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold text-sm ${getAvatarColor(
                         session.user?._id,
                       )}`}>
-                      {getInitials(session.user?.name)}
+                      {getInitials(displayName)}
                     </div>
                     <span className="text-sm font-medium hidden sm:inline">
-                      {session.user?.name?.split(" ")[0]}
+                      {displayName.split(" ")[0]}
                     </span>
                     <i
                       className={`fa-solid fa-chevron-down text-xs transition ${
@@ -123,7 +137,7 @@ export default function Navbar({
                       {/* User Info */}
                       <div className="px-4 py-4 border-b border-orange-100 bg-gradient-to-r from-orange-50 to-emerald-50">
                         <p className="font-semibold text-gray-900">
-                          {session.user?.name}
+                          {displayName}
                         </p>
                         <p className="text-xs text-gray-500 mt-1">
                           {session.user?.email}

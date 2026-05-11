@@ -21,7 +21,7 @@ function extractBudget(message) {
   const text = normalizeText(message);
 
   const numericMatch = text.match(
-    /(?:budget|around|up to|under|max|maximum|le budget est|j'ai|my budget|budget is|for)\s*(?:is)?\s*(?:around|de)?\s*(\d+(?:\.\d+)?)\s*(?:tnd|dt|dinar|dinars|usd|\$)?/i,
+    /(?:budget|around|up to|under|below|less than|only|just|max|maximum|le budget est|j'ai|i have|i've got|my budget|budget is|for)\s*(?:is)?\s*(?:around|de)?\s*(\d+(?:\.\d+)?)\s*(?:tnd|dt|dinar|dinars|usd|\$)?/i,
   );
   if (numericMatch) {
     return { numeric: parseFloat(numericMatch[1]), level: null };
@@ -298,6 +298,42 @@ function detectCuisinePreferences(message) {
     .map(([category]) => category);
 }
 
+const dishIntentTerms = {
+  tunisian: ["couscous", "ojja", "brik", "lablabi", "kafteji", "mloukhia"],
+  seafood: ["seafood", "fish", "shrimp", "calamari", "octopus", "salmon", "tuna", "lobster"],
+  italian: ["pizza", "pasta", "risotto", "lasagna", "ravioli", "gnocchi"],
+  fastfood: ["burger", "sandwich", "fries", "tacos", "wrap", "hotdog", "kebab", "shawarma"],
+  japanese: ["sushi", "maki", "ramen", "udon", "tempura"],
+  asian: ["noodles", "wok", "rice", "thai", "chinese", "korean", "indian"],
+  cafe: ["coffee", "brunch", "cappuccino", "latte", "espresso"],
+  grill: ["grill", "bbq", "barbecue", "meat", "steak", "beef", "lamb", "chicken", "ribs", "brochette", "merguez"],
+  sweets: ["sweet", "dessert", "cake", "pastry", "chocolate", "ice cream", "crepe", "waffle", "cookie", "nutella", "kinder"],
+  drinks: ["drink", "juice", "smoothie", "milkshake", "coffee", "tea", "latte", "soda", "lemonade", "mojito"],
+};
+
+function getRequestedDishTerms(message = "", categories = []) {
+  const text = normalizeText(message);
+  const terms = new Set();
+
+  for (const category of categories) {
+    terms.add(category);
+    (dishIntentTerms[category] || []).forEach((term) => terms.add(term));
+  }
+
+  const words = text.match(/[a-zA-ZÀ-ÿ0-9]+/g) || [];
+  const ignored = new Set([
+    "i", "me", "my", "want", "need", "have", "only", "with", "for", "food",
+    "dish", "dishes", "restaurant", "restaurants", "suggest", "recommend",
+    "please", "tnd", "dt", "dinar", "dinars", "budget", "eat", "hungry",
+  ]);
+
+  words
+    .filter((word) => word.length > 2 && !ignored.has(word))
+    .forEach((word) => terms.add(word));
+
+  return [...terms];
+}
+
 function detectMoodTags(message) {
   const text = normalizeText(message);
   const moods = [];
@@ -383,6 +419,44 @@ function filterMenuByBudget(menu = [], maxBudget) {
   });
 }
 
+function scoreMenuItem(item, terms = []) {
+  const haystack = normalizeText(
+    [item.name, item.description].filter(Boolean).join(" "),
+  );
+
+  if (!terms.length) return 1;
+
+  return terms.reduce((score, term) => {
+    if (!term) return score;
+    if (haystack.includes(normalizeText(term))) return score + 4;
+    return score;
+  }, 0);
+}
+
+function filterMenuForRequest(menu = [], prefs, message = "") {
+  if (!Array.isArray(menu) || !menu.length) return [];
+
+  const budgeted = prefs.maxBudget?.numeric
+    ? filterMenuByBudget(menu, prefs.maxBudget.numeric)
+    : [...menu];
+  const terms = getRequestedDishTerms(message, prefs.categories);
+  const scored = budgeted
+    .map((item) => ({ ...item, matchScore: scoreMenuItem(item, terms) }))
+    .filter((item) => !terms.length || item.matchScore > 0)
+    .sort((a, b) => {
+      if (b.matchScore !== a.matchScore) return b.matchScore - a.matchScore;
+      if (prefs.maxBudget?.numeric) {
+        return (
+          Math.abs(prefs.maxBudget.numeric - Number(a.price || 0)) -
+          Math.abs(prefs.maxBudget.numeric - Number(b.price || 0))
+        );
+      }
+      return Number(a.price || 0) - Number(b.price || 0);
+    });
+
+  return scored;
+}
+
 function averageMenuPrice(menu = []) {
   if (!Array.isArray(menu) || !menu.length) return null;
   const validPrices = menu
@@ -444,6 +518,12 @@ function scoreRestaurant(restaurant, prefs) {
     if (haystack.includes(category)) score += 10;
   }
 
+  const matchingMenu = filterMenuForRequest(restaurant.menu || [], prefs, prefs.message);
+  if (prefs.categories.length || prefs.maxBudget?.numeric) {
+    if (matchingMenu.length) score += Math.min(36, matchingMenu.length * 9);
+    else score -= prefs.maxBudget?.numeric ? 70 : 28;
+  }
+
   for (const tag of prefs.moods) {
     if (haystack.includes(normalizeText(tag))) score += 10;
   }
@@ -465,6 +545,7 @@ function rankRestaurants(restaurants = [], message = "") {
     maxDistanceKm: extractMaxDistance(message),
     categories: detectCuisinePreferences(message),
     moods: detectMoodTags(message),
+    message,
   };
 
   const ranked = restaurants
@@ -506,23 +587,11 @@ function buildRestaurantSummary(restaurants = [], message = "") {
 
   const summary = ranked
     .map((restaurant, index) => {
-      const filteredMenu = filterMenuByBudget(
-        restaurant.menu || [],
-        prefs.maxBudget?.numeric,
-      );
+      const matchedMenu = filterMenuForRequest(restaurant.menu || [], prefs, message);
 
-      // Show all menu if user requested it, otherwise limit to 4 items
       const menuToShow = showFullMenu
-        ? filteredMenu.length
-          ? filteredMenu
-          : Array.isArray(restaurant.menu)
-            ? restaurant.menu
-            : []
-        : filteredMenu.length
-          ? filteredMenu.slice(0, 4)
-          : Array.isArray(restaurant.menu)
-            ? restaurant.menu.slice(0, 4)
-            : [];
+        ? matchedMenu
+        : matchedMenu.slice(0, 5);
 
       const dishes = menuToShow.length
         ? menuToShow
@@ -539,7 +608,9 @@ function buildRestaurantSummary(restaurants = [], message = "") {
                 : `${isNew}${item.name}`;
             })
             .join(", ")
-        : "No menu available";
+        : prefs.maxBudget?.numeric
+          ? `No matching dishes at or under ${prefs.maxBudget.numeric} TND`
+          : "No matching menu items found";
 
       return [
         `${index + 1}. ${restaurant.name}`,
@@ -661,16 +732,11 @@ function buildFallbackReply(restaurants = [], message = "") {
   const top = ranked.slice(0, 2);
 
   const lines = top.map((restaurant) => {
-    const affordableDishes = filterMenuByBudget(
+    const menuToUse = filterMenuForRequest(
       restaurant.menu || [],
-      prefs.maxBudget?.numeric,
-    );
-
-    const menuToUse = affordableDishes.length
-      ? affordableDishes.slice(0, 2)
-      : Array.isArray(restaurant.menu)
-        ? restaurant.menu.slice(0, 2)
-        : [];
+      prefs,
+      message,
+    ).slice(0, 2);
 
     const dishText = menuToUse.length
       ? menuToUse
@@ -679,7 +745,9 @@ function buildFallbackReply(restaurants = [], message = "") {
             return price ? `${item.name} (${price})` : item.name;
           })
           .join(" or ")
-      : "their menu";
+      : prefs.maxBudget?.numeric
+        ? `no dishes at or under ${prefs.maxBudget.numeric} TND`
+        : "their menu";
 
     const reasons = [
       restaurant.rating ? `rated ${restaurant.rating}` : null,
@@ -733,6 +801,52 @@ function extractRecommendedDishes(aiResponse, restaurants = []) {
   }
 
   return recommendedDishes;
+}
+
+function buildDeterministicDishes(restaurants = [], message = "") {
+  const { prefs, ranked } = rankRestaurants(restaurants, message);
+  const dishes = [];
+
+  for (const restaurant of ranked) {
+    const matches = filterMenuForRequest(restaurant.menu || [], prefs, message);
+
+    for (const item of matches.slice(0, 2)) {
+      dishes.push({
+        name: item.name,
+        price: item.price,
+        image: item.image || null,
+        description: item.description || "",
+        restaurant: restaurant.name,
+        restaurantId: restaurant._id,
+      });
+    }
+  }
+
+  if (!dishes.length && prefs.maxBudget?.numeric) {
+    const alternatives = restaurants
+      .flatMap((restaurant) =>
+        (restaurant.menu || []).map((item) => ({
+          item,
+          restaurant,
+          overBy: Number(item.price || 0) - prefs.maxBudget.numeric,
+        })),
+      )
+      .filter(({ overBy }) => overBy > 0)
+      .sort((a, b) => a.overBy - b.overBy)
+      .slice(0, 5);
+
+    return alternatives.map(({ item, restaurant }) => ({
+      name: item.name,
+      price: item.price,
+      image: item.image || null,
+      description: item.description || "",
+      restaurant: restaurant.name,
+      restaurantId: restaurant._id,
+      isAlternative: true,
+    }));
+  }
+
+  return dishes.slice(0, 10);
 }
 
 router.post("/chat", async (req, res) => {
@@ -793,7 +907,19 @@ router.post("/chat", async (req, res) => {
       });
     }
 
-    const recommendedDishes = extractRecommendedDishes(reply, restaurants);
+    const deterministicDishes = buildDeterministicDishes(restaurants, message);
+    const recommendedDishes = [
+      ...extractRecommendedDishes(reply, restaurants),
+      ...deterministicDishes,
+    ].filter(
+      (dish, index, all) =>
+        index ===
+        all.findIndex(
+          (entry) =>
+            normalizeText(entry.name) === normalizeText(dish.name) &&
+            normalizeText(entry.restaurant) === normalizeText(dish.restaurant),
+        ),
+    );
     const rankedRestaurants = rankRestaurants(restaurants, message).ranked;
 
     // If user asks about new items, include them in the response
